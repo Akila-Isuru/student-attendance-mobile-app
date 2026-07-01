@@ -1,19 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:student_attendance_app/bmi_calculatior.dart';
 
 void main() {
-  runApp(const AttendanceApp());
+  runApp(const MyApp());
 }
 
-class AttendanceApp extends StatelessWidget {
-  const AttendanceApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text("Student Attendance")),
-        body: const Center(child: Text("Welcome to Attendance App")),
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
+      home: const BMICalculatiorPage(),
+    );
+  }
+}
+
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Flutter App'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: const Center(child: Text('Hello, Flutter!')),
     );
   }
 }
