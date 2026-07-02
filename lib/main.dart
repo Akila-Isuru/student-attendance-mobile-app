@@ -1,38 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:student_attendance_app/bmi_calculatior.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  runApp(const AttendanceApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AttendanceApp extends StatelessWidget {
+  const AttendanceApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+      home: Scaffold(
+        body: Center(
+          child: Text(
+            "Firebase Successfully Connected!",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+        ),
       ),
-      home: const BMICalculatiorPage(),
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Flutter App'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: const Center(child: Text('Hello, Flutter!')),
     );
   }
 }
