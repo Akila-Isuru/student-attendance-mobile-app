@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:student_attendance_app/login_page.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -17,14 +18,7 @@ class AttendanceApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Center(
-          child: Text(
-            "Firebase Successfully Connected!",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
+      home: LoginPage(),
     );
   }
 }
