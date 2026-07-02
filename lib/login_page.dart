@@ -22,12 +22,12 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Entered Successfully"),
-            backgroundColor: Colors.lightGreenAccent,
+            content: Text("Logged Successfully"),
+            backgroundColor: Colors.green,
           ),
         );
       }
-    } on FirebaseException catch (e) {
+    } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -52,7 +52,45 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsetsGeometry.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [],
+          children: [
+            const Icon(Icons.school, size: 100, color: Colors.blueAccent),
+            const SizedBox(height: 30),
+
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: "Email Adrress",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.mail),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(
+                labelText: "password",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 30),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text("Login", style: TextStyle(fontSize: 18)),
+              ),
+            ),
+          ],
         ),
       ),
     );
