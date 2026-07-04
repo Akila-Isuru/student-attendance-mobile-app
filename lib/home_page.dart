@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'login_page.dart';
+import 'attendance_page.dart';
+import 'leave_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,166 +10,33 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Future<void> _markAttendance() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
+  int _selectedIndex = 0;
 
-      if (user != null) {
-        await FirebaseFirestore.instance.collection('attendance').add({
-          'email': user.email,
-          'uid': user.uid,
-          'timestamp': FieldValue.serverTimestamp(),
-          'status': 'Present',
-        });
+  final List<Widget> _pages = [const AttendancePage(), const LeavePage()];
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Attendance Marked Successfully! ✅"),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
-  }
-
-  void _logout() async {
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    }
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Student Dashboard"),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
-        ],
-      ),
+      body: _pages[_selectedIndex],
 
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                const Icon(Icons.check_circle, size: 60, color: Colors.green),
-                const SizedBox(height: 10),
-                const Text(
-                  "Welcome Back!",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  "${user?.email}",
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                const SizedBox(height: 20),
-
-                ElevatedButton.icon(
-                  onPressed: _markAttendance,
-                  icon: const Icon(Icons.fingerprint, size: 28),
-                  label: const Text(
-                    "Mark Attendance",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
-                    ),
-                    // backgroundColor: Colors.orangeAccent,
-                    // foregroundColor: Colors.white,
-                    // shape: RoundedRectangleBorder(
-                    //   borderRadius: BorderRadius.circular(10),
-                    // ),
-                  ),
-                ),
-              ],
-            ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.blueAccent,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle_outline),
+            label: 'Attendance',
           ),
-
-          const Divider(thickness: 2),
-
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              "Attendance History",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('attendance')
-                  .where('uid', isEqualTo: user?.uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text("No attendance records found."),
-                  );
-                }
-
-                final records = snapshot.data!.docs;
-
-                return ListView.builder(
-                  itemCount: records.length,
-                  itemBuilder: (context, index) {
-                    var data = records[index].data() as Map<String, dynamic>;
-
-                    DateTime? date;
-                    if (data['timestamp'] != null) {
-                      date = (data['timestamp'] as Timestamp).toDate();
-                    }
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 5,
-                      ),
-                      elevation: 2,
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Colors.green,
-                          child: Icon(Icons.done_all, color: Colors.white),
-                        ),
-                        title: Text("Status: ${data['status'] ?? "Unknown"}"),
-                        subtitle: Text(
-                          date != null
-                              ? "${date.toLocal()}".split('.')[0]
-                              : "Loading time...",
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_outlined),
+            label: 'Leave Requests',
           ),
         ],
       ),
