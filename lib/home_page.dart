@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:student_attendance_app/login_page.dart';
@@ -10,6 +11,38 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Future<void> _markAttendance() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        await FirebaseFirestore.instance.collection("attendance").add({
+          'email': user.email,
+          'uid': user.uid,
+          'timestamp': FieldValue.serverTimestamp(),
+          'status': 'present',
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Attendance Marked Successfully !"),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Error"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
   void _logout() async {
     await FirebaseAuth.instance.signOut();
 
@@ -47,6 +80,27 @@ class _HomePageState extends State<HomePage> {
             Text(
               "${user?.email}",
               style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 40),
+
+            ElevatedButton.icon(
+              onPressed: _markAttendance,
+              icon: const Icon(Icons.fingerprint, size: 28),
+              label: const Text(
+                "Mark Attendance",
+                style: TextStyle(fontSize: 18),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
+                // backgroundColor: Colors.orangeAccent,
+                // foregroundColor: Colors.white,
+                // shape: RoundedRectangleBorder(
+                //   borderRadius: BorderRadius.circular(10)
+                // )
+              ),
             ),
           ],
         ),
