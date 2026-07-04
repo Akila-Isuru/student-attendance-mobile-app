@@ -41,7 +41,6 @@ class _LeavePageState extends State<LeavePage> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-
       if (user != null) {
         await FirebaseFirestore.instance.collection('leave_requests').add({
           'uid': user.uid,
@@ -60,7 +59,7 @@ class _LeavePageState extends State<LeavePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Leave Request Submitted! "),
+              content: Text("Leave Request Submitted!"),
               backgroundColor: Colors.green,
             ),
           );
@@ -76,6 +75,77 @@ class _LeavePageState extends State<LeavePage> {
         );
       }
     }
+  }
+
+  Future<void> _deleteLeaveRequest(String docId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('leave_requests')
+          .doc(docId)
+          .delete();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Leave Request Deleted! 🗑️"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateLeaveRequest(String docId, String currentReason) async {
+    TextEditingController editController = TextEditingController(
+      text: currentReason,
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Reason"),
+          content: TextField(
+            controller: editController,
+            decoration: const InputDecoration(labelText: "Update your reason"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await FirebaseFirestore.instance
+                    .collection('leave_requests')
+                    .doc(docId)
+                    .update({'reason': editController.text});
+
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Reason Updated!"),
+                      backgroundColor: Colors.blueAccent,
+                    ),
+                  );
+                }
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -120,17 +190,12 @@ class _LeavePageState extends State<LeavePage> {
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: _submitLeaveRequest,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
+              // style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, foregroundColor: Colors.white),
               child: const Text("Submit Request"),
             ),
-
             const SizedBox(height: 20),
             const Divider(thickness: 2),
             const SizedBox(height: 10),
-
             const Text(
               "My Leave Requests",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -161,6 +226,7 @@ class _LeavePageState extends State<LeavePage> {
                     itemCount: requests.length,
                     itemBuilder: (context, index) {
                       var data = requests[index].data() as Map<String, dynamic>;
+                      String docId = requests[index].id;
 
                       DateTime? leaveDate;
                       if (data['date'] != null) {
@@ -173,17 +239,49 @@ class _LeavePageState extends State<LeavePage> {
                         child: ListTile(
                           leading: const Icon(
                             Icons.pending_actions,
-                            // color: Colors.orange,
+                            color: Colors.orange,
                           ),
                           title: Text(data['reason'] ?? "No Reason"),
-                          subtitle: Text(
-                            leaveDate != null
-                                ? "Date: ${leaveDate.toLocal().toString().split(' ')[0]}" // "Date: " කෑල්ල split එකෙන් එලියට ගත්තා
-                                : "Unknown Date",
+
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                leaveDate != null
+                                    ? "Date: ${leaveDate.toLocal().toString().split(' ')[0]}"
+                                    : "Unknown Date",
+                              ),
+                              Text(
+                                "Status: ${data['status'] ?? "Pending"}",
+                                style: const TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                          trailing: Chip(
-                            label: Text(data['status'] ?? "Pending"),
-                            backgroundColor: Colors.orange.shade100,
+
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blueAccent,
+                                ),
+                                onPressed: () => _updateLeaveRequest(
+                                  docId,
+                                  data['reason'] ?? "",
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.redAccent,
+                                ),
+                                onPressed: () => _deleteLeaveRequest(docId),
+                              ),
+                            ],
                           ),
                         ),
                       );
