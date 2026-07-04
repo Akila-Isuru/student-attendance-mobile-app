@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LeavePage extends StatefulWidget {
   const LeavePage({super.key});
@@ -21,6 +20,7 @@ class _LeavePageState extends State<LeavePage> {
       firstDate: DateTime.now(),
       lastDate: DateTime(2030),
     );
+
     if (pickedDate != null) {
       setState(() {
         _selectedDate = pickedDate;
@@ -32,22 +32,23 @@ class _LeavePageState extends State<LeavePage> {
     if (_reasonController.text.isEmpty || _selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("please enter a reason and select a date!"),
+          content: Text("Please enter a reason and select a date!"),
           backgroundColor: Colors.redAccent,
         ),
       );
       return;
     }
+
     try {
       final user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
-        await FirebaseFirestore.instance.collection("leave_requests").add({
+        await FirebaseFirestore.instance.collection('leave_requests').add({
           'uid': user.uid,
-          'emial': user.email,
+          'email': user.email,
           'reason': _reasonController.text,
           'date': _selectedDate,
-          'status': 'pending',
+          'status': 'Pending',
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -55,10 +56,11 @@ class _LeavePageState extends State<LeavePage> {
           _reasonController.clear();
           _selectedDate = null;
         });
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Leave Request Submitted Successfully!"),
+            const SnackBar(
+              content: Text("Leave Request Submitted! "),
               backgroundColor: Colors.green,
             ),
           );
@@ -67,7 +69,10 @@ class _LeavePageState extends State<LeavePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error"), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -75,6 +80,8 @@ class _LeavePageState extends State<LeavePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Apply Leave"),
@@ -82,7 +89,7 @@ class _LeavePageState extends State<LeavePage> {
         foregroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsetsGeometry.all(20),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -91,7 +98,6 @@ class _LeavePageState extends State<LeavePage> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-
             TextField(
               controller: _reasonController,
               decoration: const InputDecoration(
@@ -100,8 +106,7 @@ class _LeavePageState extends State<LeavePage> {
                 prefixIcon: Icon(Icons.edit_document),
               ),
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 10),
             OutlinedButton.icon(
               onPressed: _pickDate,
               icon: const Icon(Icons.calendar_month),
@@ -111,22 +116,80 @@ class _LeavePageState extends State<LeavePage> {
                     : "Selected: ${_selectedDate!.toLocal()}".split(' ')[0],
                 style: const TextStyle(fontSize: 16),
               ),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
             ),
-            const SizedBox(height: 30),
-
+            const SizedBox(height: 10),
             ElevatedButton(
               onPressed: _submitLeaveRequest,
               style: ElevatedButton.styleFrom(
-                // padding: const EdgeInsets.symmetric(vertical: 15),
-                // backgroundColor: Colors.orangeAccent,
-                // foregroundColor: Colors.white,
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
               ),
-              child: const Text(
-                "Submit Request",
-                style: TextStyle(fontSize: 18),
+              child: const Text("Submit Request"),
+            ),
+
+            const SizedBox(height: 20),
+            const Divider(thickness: 2),
+            const SizedBox(height: 10),
+
+            const Text(
+              "My Leave Requests",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('leave_requests')
+                    .where('uid', isEqualTo: user?.uid)
+                    .orderBy('createdAt', descending: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text("No leave requests found."),
+                    );
+                  }
+
+                  final requests = snapshot.data!.docs;
+
+                  return ListView.builder(
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) {
+                      var data = requests[index].data() as Map<String, dynamic>;
+
+                      DateTime? leaveDate;
+                      if (data['date'] != null) {
+                        leaveDate = (data['date'] as Timestamp).toDate();
+                      }
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        elevation: 2,
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.pending_actions,
+                            // color: Colors.orange,
+                          ),
+                          title: Text(data['reason'] ?? "No Reason"),
+                          subtitle: Text(
+                            leaveDate != null
+                                ? "Date: ${leaveDate.toLocal().toString().split(' ')[0]}" // "Date: " කෑල්ල split එකෙන් එලියට ගත්තා
+                                : "Unknown Date",
+                          ),
+                          trailing: Chip(
+                            label: Text(data['status'] ?? "Pending"),
+                            backgroundColor: Colors.orange.shade100,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
